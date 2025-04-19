@@ -1,0 +1,84 @@
+/* Container for character and bubble */
+#ollama-quip-container {
+  position: fixed;
+  bottom: 15px;
+  right: 15px; /* Start position relative to viewport */
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 250px;
+  font-family: sans-serif;
+
+  /* --- Animation Properties --- */
+  /* Initial state: Off-screen to the right and faded out */
+  transform: translateX(calc(100% + 20px)); /* Move 100% of its width + a little extra margin */
+  opacity: 0;
+  pointer-events: none; /* Prevent interaction while hidden */
+
+  /* Define the transition for sliding and fading */
+  transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+/* --- Visible State --- */
+/* Add this class via JS to trigger the slide-in */
+#ollama-quip-container.ollama-visible {
+  transform: translateX(0); /* Move back to original position */
+  opacity: 1;
+  pointer-events: auto; /* Allow interaction when visible */
+}
+
+
+/* The character image */
+#ollama-quip-character {
+  width: 80px;
+  height: auto;
+  display: block;
+  margin-top: 5px;
+  user-select: none;
+  -webkit-user-drag: none;
+  cursor: pointer; /* Make it look clickable */
+  transition: transform 0.2s ease; /* Optional: slight bounce on hover/click */
+}
+
+/* Optional: slight grow effect on hover */
+#ollama-quip-character:hover {
+  transform: scale(1.05);
+}
+
+/* The speech bubble */
+#ollama-quip-bubble {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px 15px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  position: relative;
+  margin-bottom: 5px;
+  /* Bubble starts hidden by container opacity */
+}
+
+/* Triangle pointing down from the bubble */
+#ollama-quip-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #f0f0f0;
+  filter: drop-shadow(0px 1px 0px #ccc);
+}
+
+
+/* Text inside the bubble */
+#ollama-quip-text {
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+  text-align: left;
+}

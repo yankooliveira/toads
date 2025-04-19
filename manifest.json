@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Totally Unhelpful Assistant Devices - TOADs",
+  "version": "1.3",
+  "description": "Displays a character with an Ollama/Gemini-generated quip about the current page.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost/",
+    "https://generativelanguage.googleapis.com/"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "style.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "images/character.png",
+        "characters/*/*.png",
+        "characters/*/*.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_icon": {
+      "16": "images/character.png",
+      "48": "images/character.png",
+      "128": "images/character.png"
+    },
+    "css": ["options.css"],
+    "default_title": "Set up your TOADs!"
+  }
+}

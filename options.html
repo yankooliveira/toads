@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set up your TOADs</title>
+    <!-- Link the external CSS file -->
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Set up your TOADs</h1>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="general">General</button>
+            <button class="tab-button" data-tab="character-hub">Character Hub</button>
+            <button class="tab-button" data-tab="backend-settings">Backend Settings</button>
+            <button class="tab-button" data-tab="data-management">Data Management</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+            <!-- General Tab -->
+            <div id="tab-general" class="tab-pane active">
+                <fieldset>
+                    <legend>General Appearance</legend>
+                    <div>
+                        <label for="chance">Appearance Chance (%)</label>
+                        <input type="number" id="chance" min="0" max="100">
+                        <div class="description">Percentage chance the character will appear on page load (0-100).</div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <!-- Character Hub Tab -->
+            <div id="tab-character-hub" class="tab-pane">
+                 <fieldset>
+                     <legend>Choose Character</legend>
+
+                     <!-- Character Carousel -->
+                     <div class="character-carousel-container">
+                         <button id="carousel-prev" class="carousel-nav-btn"><</button>
+                         <div id="carousel-slides" class="carousel-slides">
+                             <!-- Carousel slides will be populated by JS -->
+                             <div class="carousel-slide loading">Loading...</div>
+                         </div>
+                         <button id="carousel-next" class="carousel-nav-btn">></button>
+                     </div>
+                      <div id="carousel-dots" class="carousel-dots">
+                          <!-- Dots will be populated by JS -->
+                      </div>
+
+                      <!-- Selected Character Details -->
+                     <div id="selected-character-details" class="selected-character-details">
+                         <!-- Character details will be shown here by JS -->
+                         <p>Select a character above to see details.</p>
+                     </div>
+
+                 </fieldset>
+
+                 <fieldset>
+                      <legend>Custom Characters Folder</legend>
+                     <p class="description">Select a folder on your computer containing subdirectories, each with a <code>manifest.json</code> and <code>character.png</code>.</p>
+                     <span id="custom-folder-path" style="font-style: italic; display: block; margin-bottom: 10px;">No custom folder selected</span>
+                     <div class="add-controls" style="margin-top: 0;">
+                         <button id="select-custom-folder-btn" style="flex-grow: 0;">Select Folder</button>
+                         <button id="rescan-custom-folder-btn" style="flex-grow: 0; margin-left: 10px;">Rescan</button>
+                     </div>
+                     <p class="description">Use "Rescan" if you add, remove or modify characters from the selected folder.</p>
+                 </fieldset>
+            </div>
+
+            <!-- Backend Settings Tab -->
+            <div id="tab-backend-settings" class="tab-pane">
+                <fieldset>
+                    <legend>Backend Selection</legend>
+                    <div class="radio-group">
+                        <label><input type="radio" name="backend" value="ollama" id="backend-ollama"> Ollama (Local)</label>
+                        <label><input type="radio" name="backend" value="gemini" id="backend-gemini"> Gemini API (Google)</label>
+                    </div>
+
+                    <!-- Ollama Specific Settings -->
+                    <div id="ollama-settings" class="backend-settings">
+                        <label for="ollamaModel">Ollama Model</label>
+                        <input type="text" id="ollamaModel">
+                        <div class="description">The name of the Ollama model to use (e.g., <code>llama3</code>, <code>gemma:2b</code>).</div>
+                        
+                        <label for="ollamaModel">Ollama URL</label>
+                        <input type="text" id="ollamaUrl">
+                        <div class="description">The URL of your ollama server (defaults to http://localhost:11434).</div>
+
+                         <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
+                            <label for="ollamaSendPageContent" style="display: inline-block; font-weight: normal;">
+                                 <input type="checkbox" id="ollamaSendPageContent" style="width: auto; margin-right: 5px; vertical-align: middle;">
+                                 Send Page Text Content (Experimental)
+                            </label>
+                            <div class="description" style="margin-top: 5px;">
+                                If checked, sends a snippet of the page's text content along with the URL to Ollama. Requires more processing; may affect performance or privacy.
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Gemini Specific Settings -->
+                    <div id="gemini-settings" class="backend-settings">
+                        <label for="geminiApiKey">Gemini API Key</label>
+                        <input type="password" id="geminiApiKey">
+                        <div class="description">Your API key from Google AI Studio. Stored locally in browser storage.</div>
+
+                        <label for="geminiModel">Gemini Model</label>
+                        <input type="text" id="geminiModel">
+                        <div class="description">Select the Gemini model variant. See available models <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank">here</a>.</div>
+
+                         <label for="geminiRPM">Gemini Requests Per Minute Limit</label>
+                        <input type="number" id="geminiRPM" min="0">
+                        <div class="description">Max Gemini API calls per minute (e.g., 60 for free tier). 0 to disable check.</div>
+
+                        <label for="geminiRPD">Gemini Requests Per Day Limit</label>
+                        <input type="number" id="geminiRPD" min="0">
+                        <div class="description">Max Gemini API calls per 24 hours (e.g., 1500). 0 to disable check.</div>
+                    </div>
+                </fieldset>
+
+                <!-- Prompt Preview -->
+                 <fieldset id="prompt-preview-fieldset">
+                     <legend>Generated Prompt Preview</legend>
+                     <p class="description">This is the full text that will be sent to the language model based on current settings and the selected character.</p>
+                     <textarea id="prompt-preview-area" readonly class="prompt-preview-area"></textarea>
+                 </fieldset>
+            </div>
+
+            <!-- Data Management Tab -->
+            <div id="tab-data-management" class="tab-pane">
+                 <fieldset>
+                    <legend>History Settings</legend>
+                    <label for="maxHistorySize">Maximum History Length</label>
+                    <input type="number" id="maxHistorySize" min="0">
+                    <div class="description">Total number of recent quips (across all URLs) to store for rate limiting and the <code>{HISTORY}</code> prompt variable (0 to disable history). Oldest entries are removed first (FIFO).</div>
+                 </fieldset>
+
+                <details id="blocked-urls-section">
+                    <summary>Manage Blocked URLs</summary>
+                    <div class="details-content">
+                        <p class="description">URLs added here (matching origin + path) will prevent the character from appearing.</p>
+                        <ul id="blocked-urls-list" class="managed-list">
+                            <li><span class="list-item-text">Loading...</span></li>
+                        </ul>
+                        <div id="add-blocked-url-controls" class="add-controls">
+                             <input type="text" id="new-blocked-url-input" placeholder="Enter URL to block (e.g., https://example.com/path)">
+                             <button id="add-blocked-url-btn">Add URL</button>
+                        </div>
+                    </div>
+                </details>
+
+                <details id="history-section">
+                    <summary>View/Manage History</summary>
+                    <div class="details-content">
+                         <p class="description">Recent quips generated by the extension. Removing entries here also removes them from rate limit calculations.</p>
+                         <!-- Change the button here -->
+                         <button id="clear-history-btn">Clear History</button>
+                         <ul id="history-list" class="managed-list">
+                            <!-- History entries will be listed here by JS -->
+                            <li><span class="list-item-text">History not loaded. Expand section or Clear History.</span></li> <!-- Updated placeholder text -->
+                         </ul>
+                    </div>
+                 </details>
+            </div>
+
+        </div> <!-- End tab-content -->
+
+        <!-- Save Button (kept outside tab content for visibility) -->
+        <button id="save">Save All Settings</button>
+        <div id="status"></div>
+
+    </div> <!-- End container -->
+
+    <!-- Scripts -->
+    <script src="characters.js" type="module"></script>
+    <script src="promptBuilder.js" type="module"></script>
+    <script src="options.js" type="module" defer></script>
+
+</body>
+</html>
