@@ -651,6 +651,7 @@ function saveOptions() {
     const chance = parseInt(chanceInput.value, 10);
     const backendType = document.querySelector('input[name="backend"]:checked').value;
     const ollamaModel = ollamaModelInput.value.trim();
+    const ollamaUrl = ollamaUrlInput.value.trim();
     const ollamaSendPageContent = ollamaSendPageContentCheckbox.checked;
     const geminiApiKey = geminiApiKeyInput.value.trim();
     const geminiModel = geminiModelSelect.value;
@@ -671,6 +672,7 @@ function saveOptions() {
         chance: chance,
         backendType: backendType,
         ollamaModel: ollamaModel,
+        ollamaUrl: ollamaUrl,
         ollamaSendPageContent: ollamaSendPageContent,
         geminiApiKey: geminiApiKey,
         geminiModel: geminiModel,

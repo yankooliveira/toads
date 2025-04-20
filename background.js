@@ -5,7 +5,6 @@ import { BUILTIN_CHARACTERS } from './characters.js';
 console.log("TOADs: Background service worker started.");
 
 // --- Constants ---
-const OLLAMA_API_URL = "http://localhost:11434/api/generate";
 const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 // --- Helper Functions ---
@@ -128,11 +127,12 @@ function getSelectedCharacter(selectedId, availableChars) {
 }
 
 // --- API Call Functions ---
-async function getOllamaQuip(url, model, finalPrompt) {
+async function getOllamaQuip(url, model, ollamaBaseUrl, finalPrompt) {
     console.log(`Ollama: Getting quip for URL: ${url} using model: ${model}`);
 
+    const fullOllamaApiUrl = `${ollamaBaseUrl.replace(/\/+$/, '')}/api/generate`;
     try {
-        const response = await fetch(OLLAMA_API_URL, {
+        const response = await fetch(fullOllamaApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ model: model, prompt: finalPrompt, stream: false }),
@@ -365,7 +365,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
              if (backendUsed === 'gemini') {
                  quip = await getQuipFunction(currentFullUrl, model, apiKey, finalPrompt);
              } else {
-                 quip = await getQuipFunction(currentFullUrl, model, finalPrompt);
+                 quip = await getQuipFunction(currentFullUrl, model, currentSettings.ollamaUrl, finalPrompt);
              }
 
              const isErrorQuip = !quip || /error|limit|fail|invalid|reach|blocked|speechless|confused|malfunctioning|missing api key|couldn't generate a quip|blocked the prompt|unexpected response/i.test(quip);
