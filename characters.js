@@ -1,5 +1,3 @@
-// characters.js
-
 /**
  * Defines the structure for a character.
  * @typedef {object} CharacterDefinition
@@ -12,8 +10,6 @@
  * @property {string} examples - String containing examples for the AI, usually newline-separated.
  * @property {string | null} [customPromptTemplate] - (Optional) Base template for custom prompts, if character uses a specific structure beyond persona/constraints/examples.
  */
-
-// --- Built-in Character Definitions ---
 
 /** @type {CharacterDefinition[]} */
 export const BUILTIN_CHARACTERS = [
@@ -48,8 +44,6 @@ export const BUILTIN_CHARACTERS = [
 
 /**
  * Base template for constructing the final prompt using character components.
- * Note: The order and inclusion of {URL}, {HISTORY}, {PAGE_TEXT} might vary based on context.
- * This is a template used by the background script.
  */
 export const PROMPT_BASE_TEMPLATE = `{PERSONA_INSTRUCTIONS}
 Look at this URL: {URL}
@@ -58,14 +52,13 @@ Look at this URL: {URL}
 {OUTPUT_CONSTRAINTS}
 {EXAMPLES}
 
-OUTPUT:`; // Use "OUTPUT:" as the fixed marker
+OUTPUT:`;
 
-// Define sections that might be included/excluded
 export const PROMPT_SECTIONS = {
   HISTORY: `Here's what you've said before about this page:
-{HISTORY}`, // {HISTORY} will be replaced by the actual history string
+{HISTORY}`,
   PAGE_TEXT: `And consider this page content snippet:
 ---
 {PAGE_TEXT}
----` // {PAGE_TEXT} will be replaced by the actual page text
+---`
 };

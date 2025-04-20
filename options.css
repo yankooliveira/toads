@@ -1,79 +1,77 @@
-/* --- Options Page Global Styles & Basic Layout --- */
-/* Styles for the HTML body when viewing the options page */
+/* Options Page Global Styles */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   padding: 0;
   margin: 0;
-  background-color: #f4f7f6; /* Slightly warmer background */
+  background-color: #f4f7f6;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: 100vh; /* Ensure body takes at least full viewport height */
-  padding-bottom: 40px; /* Add space at the bottom */
-  font-size: 16px; /* Base font size increase */
-  color: #343a40; /* Darker default text */
+  min-height: 100vh;
+  padding-bottom: 40px;
+  font-size: 16px;
+  color: #343a40;
 }
 
-.container { /* Wrapper for the entire options page content */
-  padding: 25px; /* Increased padding */
-  max-width: 640px; /* Increased max width */
-  width: 100%; /* Take full width up to max-width */
-  margin-top: 25px; /* Increased top margin */
+.container {
+  padding: 25px;
+  max-width: 640px;
+  width: 100%;
+  margin-top: 25px;
   background-color: #fff;
-  border-radius: 10px; /* More rounded corners */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* More prominent shadow */
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   text-align: center;
   color: #343a40;
-  margin-top: 0; /* Remove top margin */
-  margin-bottom: 25px; /* Adjusted bottom margin */
-  font-size: 2em; /* Larger heading */
-  font-weight: 600; /* Semi-bold */
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 2em;
+  font-weight: 600;
 }
 
-/* Fieldset Styles */
 fieldset {
-  border: 1px solid #e9ecef; /* Lighter border */
+  border: 1px solid #e9ecef;
   padding: 20px;
-  margin-bottom: 25px; /* Increased bottom margin */
+  margin-bottom: 25px;
   border-radius: 8px;
-  background-color: #fff; /* Match container background */
-  box-shadow: none; /* Remove inner shadow */
+  background-color: #fff;
+  box-shadow: none;
 }
 legend {
-  font-weight: 600; /* Match h1 font weight */
+  font-weight: 600;
   padding: 0 10px;
   margin-left: 10px;
   font-size: 1.1em;
-  color: #495057; /* Slightly darker legend */
+  color: #495057;
 }
 
 label {
   display: block;
   margin-top: 15px;
   margin-bottom: 5px;
-  font-weight: 600; /* Semi-bold labels */
+  font-weight: 600;
   color: #495057;
-  font-size: 0.95em; /* Slightly smaller labels relative to base */
+  font-size: 0.95em;
 }
 
 input[type="number"], input[type="text"], input[type="password"], textarea, select {
   width: 100%;
-  padding: 10px 12px; /* More horizontal padding */
+  padding: 10px 12px;
   margin-bottom: 10px;
-  border: 1px solid #ced4da; /* Bootstrap-like border color */
+  border: 1px solid #ced4da;
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 1em;
-  font-family: inherit; /* Use body font */
-  color: #495057; /* Input text color */
+  font-family: inherit;
+  color: #495057;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 input[type="number"]:focus, input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
-  border-color: #80bdff; /* Blue focus glow */
+  border-color: #80bdff;
   outline: 0;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
@@ -82,20 +80,20 @@ input[type="number"]:focus, input[type="text"]:focus, input[type="password"]:foc
 textarea {
   height: 100px;
   resize: vertical;
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* Monospace font for prompts */
-  font-size: 0.9em; /* Slightly smaller monospace */
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
 }
 
-.prompt-textarea { /* Specific styling for the custom prompt textareas */
-  background-color: #f8f9fa; /* Light background for input areas */
+.prompt-textarea {
+  background-color: #f8f9fa;
 }
 
-.prompt-preview-area { /* Style for the read-only prompt textarea */
-  height: 180px; /* Taller preview */
-  background-color: #e9ecef; /* Slightly darker background than input */
+.prompt-preview-area {
+  height: 180px;
+  background-color: #e9ecef;
   border-color: #ced4da;
   cursor: default;
-  opacity: 0.9; /* Slight transparency */
+  opacity: 0.9;
 }
 
 
@@ -109,7 +107,7 @@ button {
   margin-top: 5px;
   font-size: 1em;
   transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, opacity 0.15s ease-in-out;
-  user-select: none; /* Prevent text selection */
+  user-select: none;
 }
 button:hover:not(:disabled) {
   background-color: #0056b3;
@@ -128,7 +126,7 @@ button:disabled {
 #save {
   display: block;
   width: 100%;
-  margin-top: 25px; /* Increased top margin */
+  margin-top: 25px;
   padding: 12px;
   font-size: 1.1em;
 }
@@ -139,82 +137,80 @@ button:disabled {
   min-height: 1.2em;
   text-align: center;
   padding: 0 10px;
-  /* Colors set by JS for status messages */
 }
 
 .description {
-  font-size: 0.85em; /* Slightly smaller description text */
-  color: #6c757d; /* Muted text color */
+  font-size: 0.85em;
+  color: #6c757d;
   margin-bottom: 10px;
   line-height: 1.4;
 }
 code {
-  background-color: #e9ecef; /* Lighter background */
+  background-color: #e9ecef;
   padding: 2px 4px;
   border-radius: 3px;
   font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-  font-size: 0.85em; /* Match description size */
+  font-size: 0.85em;
   color: #495057;
 }
 
-/* --- Tab Styles --- */
+/* Tab Styles */
 .tab-nav {
-  display: flex; /* Arrange buttons horizontally */
-  margin-bottom: 0; /* Space below tabs is handled by tab-content margin */
-  border-bottom: 1px solid #dee2e6; /* Lighter separator line */
-  margin-left: -25px; /* Extend to container edge */
+  display: flex;
+  margin-bottom: 0;
+  border-bottom: 1px solid #dee2e6;
+  margin-left: -25px;
   margin-right: -25px;
   padding-left: 25px;
   padding-right: 25px;
-  overflow-x: auto; /* Allow horizontal scrolling if many tabs */
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Hide scrollbar for Firefox */
-  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-/* Hide scrollbar for Chrome, Safari and Opera */
 .tab-nav::-webkit-scrollbar {
   display: none;
 }
 
 
 .tab-button {
-  background-color: transparent; /* No background */
+  background-color: transparent;
   border: none;
-  border-bottom: 2px solid transparent; /* Underline for active tab */
+  border-bottom: 2px solid transparent;
   padding: 10px 15px;
   cursor: pointer;
   font-size: 1em;
-  color: #6c757d; /* Muted color when inactive */
+  color: #6c757d;
   transition: color 0.2s ease, border-bottom-color 0.2s ease;
-  margin-right: 8px; /* More space between buttons */
-  white-space: nowrap; /* Prevent text wrap */
-  flex-shrink: 0; /* Prevent shrinking */
+  margin-right: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-button:hover:not(.active) {
-  color: #495057; /* Darker on hover */
-  border-bottom-color: #e9ecef; /* Subtle underline on hover */
+  color: #495057;
+  border-bottom-color: #e9ecef;
 }
 
 .tab-button.active {
-  color: #007bff; /* Active tab color */
-  border-bottom-color: #007bff; /* Active tab underline */
-  font-weight: 600; /* Match legend font weight */
+  color: #007bff;
+  border-bottom-color: #007bff;
+  font-weight: 600;
 }
 
 .tab-content {
-  margin-top: 25px; /* Increased space below the tab line */
+  margin-top: 25px;
 }
 
 .tab-pane {
-  display: none; /* Hide all tab panes by default */
+  display: none;
 }
 
 .tab-pane.active {
-  display: block; /* Show the active tab pane */
+  display: block;
 }
 
-/* --- Collapsible Section Styles --- */
+/* Collapsible Section Styles */
 details {
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -225,7 +221,7 @@ details {
 }
 summary {
   font-weight: 600;
-  padding: 12px 15px 12px 35px; /* Increased left padding for icon */
+  padding: 12px 15px 12px 35px;
   cursor: pointer;
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
@@ -241,19 +237,19 @@ summary::-webkit-details-marker { display: none; }
 summary::before {
   content: '>';
   position: absolute;
-  left: 15px; /* Position icon */
-  top: 50%; /* Center vertically */
+  left: 15px;
+  top: 50%;
   transform: translateY(-50%);
   font-size: 0.8em;
   transition: transform 0.2s ease;
-  color: #6c757d; /* Muted icon color */
+  color: #6c757d;
 }
 details[open] summary::before {
   transform: translateY(-50%) rotate(90deg);
 }
 .details-content { padding: 15px 20px; }
 
-/* --- Managed List Styles --- */
+/* Managed List Styles */
 .managed-list {
   list-style: none;
   padding: 0;
@@ -297,7 +293,7 @@ details[open] summary::before {
 }
 .remove-btn:hover { background-color: #c82333; }
 
-/* --- Add Button/Input Styles --- */
+/* Add Button/Input Styles */
 .add-controls {
   display: flex;
   margin-top: 10px;
@@ -307,7 +303,7 @@ details[open] summary::before {
 .add-controls button { margin-top: 0; white-space: nowrap; flex-shrink: 0; }
 
 
-/* --- Backend Specific Settings --- */
+/* Backend Specific Settings */
 .backend-settings {
    display: none;
    border-left: 4px solid #007bff;
@@ -335,7 +331,7 @@ details[open] summary::before {
    margin-bottom: 0;
 }
 
-/* --- Character Carousel Styles --- */
+/* Character Carousel Styles */
 .character-carousel-container {
   position: relative;
   width: 100%;
@@ -357,12 +353,11 @@ details[open] summary::before {
   overflow-x: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  /* The JS sets the total width of this container and individual slide widths */
 }
 
 .carousel-slide {
   flex-shrink: 0;
-  width: 100%; /* This is the width *within* the carousel-slides container, set by JS */
+  width: 100%;
   scroll-snap-align: center;
   display: flex;
   justify-content: center;
@@ -381,8 +376,6 @@ details[open] summary::before {
   cursor: pointer;
   border: 3px solid transparent;
   border-radius: 8px;
-  /* This needs to be updated by JS based on the number of slides: */
-  /* For N slides, width should be (100 / N)% */
 }
 
 .carousel-slide.selected {

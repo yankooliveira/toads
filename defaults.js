@@ -1,19 +1,15 @@
-// defaults.js
 import { BUILTIN_CHARACTERS } from './characters.js';
 
 export const DEFAULTS = {
   chance: 100,
   backendType: 'ollama',
-  // Ollama
   ollamaModel: 'gemma3:1b-it-qat',
-  ollamaUrl: 'http://localhost:11434',
+  ollamaUrl: 'http://localhost:11434', // Note: This URL isn't currently used by the background script's fetch call (it's hardcoded there).
   ollamaSendPageContent: false,
-  // Gemini
   geminiApiKey: '',
   geminiModel: 'gemini-2.0-flash-lite',
-  geminiRPM: 30,  
+  geminiRPM: 30,
   geminiRPD: 500,
-  // History
   maxHistorySize: 25,
   blockedUrls: [],
   selectedCharacterId: BUILTIN_CHARACTERS.length > 0 ? BUILTIN_CHARACTERS[0].id : null
@@ -40,7 +36,6 @@ ${EXAMPLES}
 
 OUTPUT:`;
 
-// When only URL is available
 export const DEFAULT_PROMPT_URL_ONLY = `${PERSONA_INSTRUCTIONS}
 Look at this URL: {URL}
 Here's what you've said before:

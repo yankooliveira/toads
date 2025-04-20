@@ -2,7 +2,7 @@
 #ollama-quip-container {
   position: fixed;
   bottom: 15px;
-  right: 15px; /* Start position relative to viewport */
+  right: 15px;
   z-index: 99999;
   display: flex;
   flex-direction: column;
@@ -10,22 +10,19 @@
   max-width: 250px;
   font-family: sans-serif;
 
-  /* --- Animation Properties --- */
-  /* Initial state: Off-screen to the right and faded out */
-  transform: translateX(calc(100% + 20px)); /* Move 100% of its width + a little extra margin */
+  /* Animation Properties */
+  transform: translateX(calc(100% + 20px));
   opacity: 0;
-  pointer-events: none; /* Prevent interaction while hidden */
+  pointer-events: none;
 
-  /* Define the transition for sliding and fading */
   transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out;
 }
 
-/* --- Visible State --- */
-/* Add this class via JS to trigger the slide-in */
+/* Visible State */
 #ollama-quip-container.ollama-visible {
-  transform: translateX(0); /* Move back to original position */
+  transform: translateX(0);
   opacity: 1;
-  pointer-events: auto; /* Allow interaction when visible */
+  pointer-events: auto;
 }
 
 
@@ -37,11 +34,10 @@
   margin-top: 5px;
   user-select: none;
   -webkit-user-drag: none;
-  cursor: pointer; /* Make it look clickable */
-  transition: transform 0.2s ease; /* Optional: slight bounce on hover/click */
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-/* Optional: slight grow effect on hover */
 #ollama-quip-character:hover {
   transform: scale(1.05);
 }
@@ -55,7 +51,6 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   position: relative;
   margin-bottom: 5px;
-  /* Bubble starts hidden by container opacity */
 }
 
 /* Triangle pointing down from the bubble */
