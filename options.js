@@ -19,21 +19,23 @@ const selectedCharacterDetails = document.getElementById('selected-character-det
 const selectCustomFolderBtn = document.getElementById('select-custom-folder-btn');
 const customFolderPathSpan = document.getElementById('custom-folder-path');
 const rescanCustomFolderBtn = document.getElementById('rescan-custom-folder-btn');
+// --- Add reference to the custom folder fieldset ---
+const customFolderFieldset = document.getElementById('custom-folder-fieldset');
 
 
 // Backend Settings elements
 const backendOllamaRadio = document.getElementById('backend-ollama');
-const backendGeminiRadio = document.getElementById('backend-gemini');
-const ollamaSettingsDiv = document.getElementById('ollama-settings');
-const ollamaModelInput = document.getElementById('ollamaModel');
-const ollamaUrlInput = document.getElementById('ollamaUrl');
-const ollamaSendPageContentCheckbox = document.getElementById('ollamaSendPageContent');
 const geminiSettingsDiv = document.getElementById('gemini-settings');
 const geminiApiKeyInput = document.getElementById('geminiApiKey');
 const geminiModelSelect = document.getElementById('geminiModel');
 const geminiRPMInput = document.getElementById('geminiRPM');
 const geminiRPDInput = document.getElementById('geminiRPD');
 const promptPreviewArea = document.getElementById('prompt-preview-area');
+const backendGeminiRadio = document.getElementById('backend-gemini');
+const ollamaSettingsDiv = document.getElementById('ollama-settings');
+const ollamaModelInput = document.getElementById('ollamaModel');
+const ollamaUrlInput = document.getElementById('ollamaUrl');
+const ollamaSendPageContentCheckbox = document.getElementById('ollamaSendPageContent');
 
 
 // Data Management elements
@@ -207,6 +209,7 @@ async function selectCharacter(index) {
 
     // Save the selected character ID to sync storage
     try {
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.sync.set({ selectedCharacterId: selectedChar.id });
         console.log("Selected character ID saved:", selectedChar.id);
     } catch (error) {
@@ -263,11 +266,13 @@ function navigateCarousel(direction) {
  */
 async function loadAvailableCharacters(selectedIdFromSettings) {
     try {
+        // Use browser.storage automatically if polyfill is loaded
         const data = await chrome.storage.local.get({ availableCharacters: [] });
         availableCharacters = data.availableCharacters || [];
 
         if (availableCharacters.length === 0) {
             availableCharacters = [...BUILTIN_CHARACTERS];
+             // Use browser.storage automatically if polyfill is loaded
             await chrome.storage.local.set({ availableCharacters: availableCharacters });
             console.log("Initialized available characters with built-ins.");
         } else {
@@ -307,10 +312,12 @@ async function loadAvailableCharacters(selectedIdFromSettings) {
 
 /**
  * Handles the selection of a custom character directory.
+ * NOTE: This relies on window.showDirectoryPicker, which is NOT supported in Firefox extension contexts.
+ * This function will only work in Chrome or browsers supporting the File System Access API in extension contexts.
  */
 async function selectCustomCharacterFolder() {
     if (!window.showDirectoryPicker) {
-        displayStatus("File System Access API not supported in your browser.", "red");
+        displayStatus("File System Access API not supported in your browser/context.", "red");
         console.error("File System Access API not supported.");
         return;
     }
@@ -318,7 +325,7 @@ async function selectCustomCharacterFolder() {
     try {
         // Request permission to select a directory
         const directoryHandle = await window.showDirectoryPicker({
-            id: 'ollama-page-quip-characters',
+            id: 'ollama-page-quip-characters', // ID for persistence (Chrome only?)
             mode: 'read'
         });
 
@@ -330,6 +337,7 @@ async function selectCustomCharacterFolder() {
              scanCustomDirectory(directoryHandle);
 
              // Save the name of the directory for display on next load
+             // This only saves the name, not the handle itself, as handles are not persistently stored
              await chrome.storage.sync.set({ customCharacterDirectoryName: directoryHandle.name });
 
         } else {
@@ -353,6 +361,7 @@ async function selectCustomCharacterFolder() {
 /**
  * Scans the given directory handle for custom character definitions.
  * Combines with built-in characters and updates storage/UI.
+ * NOTE: This relies on File System Access API which is NOT supported in Firefox extension contexts.
  * @param {FileSystemDirectoryHandle} directoryHandle - The handle for the custom character directory.
  */
 async function scanCustomDirectory(directoryHandle) {
@@ -361,6 +370,16 @@ async function scanCustomDirectory(directoryHandle) {
          displayStatus("No custom folder selected.", "orange");
         return;
     }
+     // Check again for File System Access API support before proceeding
+     if (!window.showDirectoryPicker) {
+          console.warn("File System Access API not available, cannot scan custom directory.");
+          displayStatus("Custom character scanning is not supported in this browser/context.", "red");
+          // Optional: Disable UI here if not already done
+          if (selectCustomFolderBtn) selectCustomFolderBtn.disabled = true;
+          if (rescanCustomFolderBtn) rescanCustomFolderBtn.disabled = true;
+          return;
+     }
+
 
     displayStatus(`Scanning "${directoryHandle.name}"...`, 'orange');
     console.log(`Starting scan of custom directory: ${directoryHandle.name}`);
@@ -435,6 +454,7 @@ async function scanCustomDirectory(directoryHandle) {
         availableCharacters = [...BUILTIN_CHARACTERS, ...customCharacters];
 
         // Save the updated list of available characters to local storage
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.local.set({ availableCharacters: availableCharacters });
 
         // Update the carousel with the new list
@@ -487,20 +507,24 @@ function renderPromptPreview() {
      const backendUsed = document.querySelector('input[name="backend"]:checked').value;
      let pageTextRelevant = false; // Will page text be included in the prompt?
 
+     // Determine which template is effectively being used
+     const effectiveTemplate = selectedChar.customPromptTemplate || PROMPT_BASE_TEMPLATE;
+
      if (backendUsed === 'gemini') {
-         // For preview, we only care if the *placeholder* exists, not the actual page content state
-         pageTextRelevant = selectedChar.customPromptTemplate?.includes('{PAGE_TEXT}') || (selectedChar.customPromptTemplate === null && (PROMPT_BASE_TEMPLATE.includes('{PAGE_TEXT_SECTION}') || PROMPT_BASE_TEMPLATE.includes('{PAGE_TEXT}')));
+          // For preview, page text is relevant if the effective template includes the placeholder
+          pageTextRelevant = effectiveTemplate.includes('{PAGE_TEXT}') || effectiveTemplate.includes('{PAGE_TEXT_SECTION}');
+
      } else { // Ollama
          // For preview, page text is relevant if the ollamaSendPageContent setting is checked AND
-         // if the user's Ollama custom prompt or the selected character's prompt template includes the placeholder
-         pageTextRelevant = ollamaSendPageContentCheckbox.checked && (selectedChar.customPromptTemplate?.includes('{PAGE_TEXT}') || (selectedChar.customPromptTemplate === null && (PROMPT_BASE_TEMPLATE.includes('{PAGE_TEXT_SECTION}') || PROMPT_BASE_TEMPLATE.includes('{PAGE_TEXT}'))));
+         // if the effective template includes the placeholder
+         pageTextRelevant = ollamaSendPageContentCheckbox.checked && (effectiveTemplate.includes('{PAGE_TEXT}') || effectiveTemplate.includes('{PAGE_TEXT_SECTION}'));
      }
 
      // Simulate context strings for the preview
      const previewUrl = "https://example.com/some/page?query=test#section";
      // Show example history if the history size setting > 0 AND a history placeholder exists in the template being used
-     const historyRelevant = maxHistorySizeInput.value > 0 && (selectedChar.customPromptTemplate?.includes('{HISTORY}') || selectedChar.customPromptTemplate?.includes('{HISTORY_SECTION}') || (selectedChar.customPromptTemplate === null && (PROMPT_BASE_TEMPLATE.includes('{HISTORY}') || PROMPT_BASE_TEMPLATE.includes('{HISTORY_SECTION}'))));
-     const previewHistory = historyRelevant ? "- Previous quip example 1\n- Previous quip example 2" : "";
+      const historyRelevant = parseInt(maxHistorySizeInput.value, 10) > 0 && (effectiveTemplate.includes('{HISTORY}') || effectiveTemplate.includes('{HISTORY_SECTION}'));
+     const previewHistory = historyRelevant ? "- Previous quip example 1\n- Previous quip example 2" : "[No history available or included]"; // Improved placeholder
 
      const previewPageText = pageTextRelevant ? "This is a snippet of the page content for preview." : "[Page text not included]";
 
@@ -543,6 +567,7 @@ function renderBlockedUrls() {
 
 async function loadBlockedUrls() {
     try {
+        // Use browser.storage automatically if polyfill is loaded
         const data = await chrome.storage.sync.get({ blockedUrls: [] });
         currentBlockedUrls = data.blockedUrls || [];
         renderBlockedUrls();
@@ -561,8 +586,9 @@ async function addBlockedUrl() {
     let urlToAdd;
     try {
         urlToAdd = cleanUrlForDisplay(rawUrl);
-        if (!urlToAdd || !urlToAdd.startsWith('http')) {
-             throw new Error("Invalid URL format (must start with http/https and include origin).");
+        // Basic validation: must look like a URL after cleaning
+        if (!urlToAdd || !(urlToAdd.startsWith('http://') || urlToAdd.startsWith('https://'))) {
+             throw new Error("Invalid URL format (must be a valid web URL).");
         }
     } catch (error) {
         displayStatus(`Invalid URL: ${error.message}`, 'red');
@@ -579,6 +605,7 @@ async function addBlockedUrl() {
     currentBlockedUrls.sort();
 
     try {
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.sync.set({ blockedUrls: currentBlockedUrls });
         newBlockedUrlInput.value = '';
         renderBlockedUrls();
@@ -597,6 +624,7 @@ async function removeBlockedUrl(urlToRemove) {
     renderBlockedUrls(); // Optimistic UI update
 
     try {
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.sync.set({ blockedUrls: currentBlockedUrls });
         displayStatus('Blocked URL removed.', 'green');
     } catch (error) {
@@ -611,6 +639,7 @@ async function removeBlockedUrl(urlToRemove) {
 async function clearHistory() {
     displayStatus("Clearing history...", "orange");
     try {
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.local.remove('requestHistory');
         currentHistory = []; // Clear global state
         renderHistory([]); // Render empty list
@@ -666,6 +695,7 @@ function renderHistory() {
 async function loadHistory() {
     historyList.innerHTML = '<li><span class="list-item-text">Loading history...</span></li>';
     try {
+        // Use browser.storage automatically if polyfill is loaded
         const data = await chrome.storage.local.get({ requestHistory: [] });
         currentHistory = data.requestHistory || [];
         renderHistory();
@@ -683,6 +713,7 @@ async function removeHistoryItem(timestampToRemove) {
     renderHistory(); // Optimistic UI update
 
      try {
+        // Use browser.storage automatically if polyfill is loaded
         await chrome.storage.local.set({ requestHistory: currentHistory });
         displayStatus('History item removed.', 'green');
          // No need to re-render prompt preview here, it uses the maxHistorySize setting, not the list content
@@ -700,7 +731,9 @@ function saveOptions() {
     const chance = parseInt(chanceInput.value, 10);
     const backendType = document.querySelector('input[name="backend"]:checked').value;
     const ollamaModel = ollamaModelInput.value.trim();
-    const ollamaUrl = ollamaUrlInput.value.trim();
+    // Ollama URL is currently not used by the background script's fetch call (it's hardcoded)
+    // If you plan to make the URL configurable, you'd read it here and pass it to the background script.
+    // const ollamaUrl = ollamaUrlInput.value.trim();
     const ollamaSendPageContent = ollamaSendPageContentCheckbox.checked;
     const geminiApiKey = geminiApiKeyInput.value.trim();
     const geminiModel = geminiModelSelect.value;
@@ -725,6 +758,7 @@ function saveOptions() {
         chance: chance,
         backendType: backendType,
         ollamaModel: ollamaModel,
+        // ollamaUrl: ollamaUrl, // Not currently used by background script API call
         ollamaSendPageContent: ollamaSendPageContent,
         geminiApiKey: geminiApiKey,
         geminiModel: geminiModel,
@@ -737,6 +771,7 @@ function saveOptions() {
         // blockedUrls and requestHistory are saved separately
     };
 
+    // Use browser.storage automatically if polyfill is loaded
     chrome.storage.sync.set(settingsToSave, () => {
         if (chrome.runtime.lastError) {
             console.error("Error saving config settings:", chrome.runtime.lastError);
@@ -752,11 +787,12 @@ function saveOptions() {
 async function restoreOptions() {
     try {
         // Load all settings, blocked URLs, history data initially
+         // Use browser.storage automatically if polyfill is loaded
         const [settings, blockedUrlsData, historyData, customDirNameData] = await Promise.all([
             chrome.storage.sync.get(DEFAULTS),
             chrome.storage.sync.get({ blockedUrls: [] }),
             chrome.storage.local.get({ requestHistory: [] }),
-            chrome.storage.sync.get({ customCharacterDirectoryName: null })
+            chrome.storage.sync.get({ customCharacterDirectoryName: null }) // Load saved custom folder name
         ]);
 
         const currentSettings = { ...DEFAULTS, ...settings };
@@ -780,16 +816,35 @@ async function restoreOptions() {
         maxHistorySizeInput.value = currentSettings.maxHistorySize;
 
         // --- Load & Populate Character Carousel ---
-        await loadAvailableCharacters(currentSettings.selectedCharacterId); // This will select the initial character and trigger renderPromptPreview
+        // This will select the initial character and trigger renderPromptPreview
+        await loadAvailableCharacters(currentSettings.selectedCharacterId);
 
-        // Display saved custom folder name if any
+        // --- Handle Custom Folder UI based on API Support ---
         const savedCustomDirName = customDirNameData.customCharacterDirectoryName;
-        if (savedCustomDirName) {
-             customFolderPathSpan.textContent = savedCustomDirName;
-             // Note: Handle is NOT restored, user must re-select to rescan.
+
+        if (!window.showDirectoryPicker) {
+            // File System Access API not supported, disable/hide the custom folder UI
+            if (customFolderFieldset) customFolderFieldset.style.display = 'none';
+            console.warn("Custom character folder selection disabled: File System Access API not supported.");
+            // Optionally display a message in the Character Hub tab
+            const charHubPane = document.getElementById('tab-character-hub');
+            if (charHubPane && !charHubPane.querySelector('.custom-folder-unavailable')) {
+                 const msg = document.createElement('p');
+                 msg.className = 'description custom-folder-unavailable';
+                 msg.style.color = 'orange';
+                 msg.textContent = 'Custom character folders are not supported in this browser.';
+                 charHubPane.appendChild(msg);
+            }
         } else {
-             customFolderPathSpan.textContent = 'No custom folder selected';
+            // API is supported, display the UI and saved folder name if any
+             if (customFolderFieldset) customFolderFieldset.style.display = 'block'; // Ensure it's visible if it was hidden by CSS
+             if (savedCustomDirName) {
+                 customFolderPathSpan.textContent = savedCustomDirName;
+             } else {
+                 customFolderPathSpan.textContent = 'No custom folder selected';
+             }
         }
+
 
         // --- Populate List UIs ---
         renderBlockedUrls(); // Render blocked URLs list immediately
@@ -809,6 +864,16 @@ async function restoreOptions() {
         renderCarousel([]); // Render empty carousel
         renderSelectedCharacterDetails(null);
         // ... potentially reset other fields to defaults ...
+         // Ensure custom folder UI is hidden on restore error if needed
+         if (customFolderFieldset) customFolderFieldset.style.display = 'none';
+         const charHubPane = document.getElementById('tab-character-hub');
+         if (charHubPane && !charHubPane.querySelector('.custom-folder-unavailable')) {
+              const msg = document.createElement('p');
+              msg.className = 'description custom-folder-unavailable';
+              msg.style.color = 'red';
+              msg.textContent = 'Failed to load options, custom folders may be unavailable.';
+              charHubPane.appendChild(msg);
+         }
     }
 }
 
@@ -831,10 +896,10 @@ tabButtons.forEach(button => {
 backendOllamaRadio.addEventListener('change', updateVisibleSettings);
 backendGeminiRadio.addEventListener('change', updateVisibleSettings);
 
-// Re-render prompt preview when backend changes
-// These listeners were redundant as updateVisibleSettings already calls renderPromptPreview
-// backendOllamaRadio.addEventListener('change', renderPromptPreview);
-// backendGeminiRadio.addEventListener('change', renderPromptPreview);
+// Re-render prompt preview when relevant inputs change
+// Note: Changing the selected character also triggers renderPromptPreview inside selectCharacter
+ollamaSendPageContentCheckbox.addEventListener('change', renderPromptPreview);
+maxHistorySizeInput.addEventListener('input', renderPromptPreview);
 
 
 // Blocked URL listeners
@@ -848,10 +913,14 @@ newBlockedUrlInput.addEventListener('keydown', (event) => {
 carouselPrevBtn.addEventListener('click', () => navigateCarousel(-1));
 carouselNextBtn.addEventListener('click', () => navigateCarousel(1));
 
-// Listener for selecting custom folder
+// Listener for selecting custom folder - Only add if API is supported
+// This check should happen *after* restoreOptions runs,
+// or the button should be disabled/hidden first, then listener potentially added/enabled.
+// Let's add the listener unconditionally but have the function check support.
 selectCustomFolderBtn.addEventListener('click', selectCustomCharacterFolder);
 
-// Listener for rescanning the custom folder
+// Listener for rescanning the custom folder - Only add if API is supported
+// Same as above, add listener unconditionally, let the function check support.
 rescanCustomFolderBtn.addEventListener('click', () => {
     if (currentCustomDirectoryHandle) {
          scanCustomDirectory(currentCustomDirectoryHandle);
@@ -859,12 +928,6 @@ rescanCustomFolderBtn.addEventListener('click', () => {
          displayStatus("Please select a custom folder first.", "orange");
     }
 });
-
-// --- Prompt Preview Listeners ---
-// Re-render prompt preview when relevant inputs change
-// Note: Changing the selected character also triggers renderPromptPreview inside selectCharacter
-ollamaSendPageContentCheckbox.addEventListener('change', renderPromptPreview);
-maxHistorySizeInput.addEventListener('input', renderPromptPreview);
 
 
 console.log("Options script loaded.");

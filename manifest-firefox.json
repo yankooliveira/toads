@@ -13,7 +13,10 @@
     "https://generativelanguage.googleapis.com/"
   ],
   "background": {
-    "service_worker": "background.js",
+    "scripts": [
+      "browser-polyfill.min.js",
+      "background.js"
+    ],
     "type": "module"
   },
   "content_scripts": [
@@ -22,6 +25,7 @@
         "<all_urls>"
       ],
       "js": [
+        "browser-polyfill.min.js",
         "content.js"
       ],
       "css": [
@@ -49,7 +53,12 @@
       "48": "images/character.png",
       "128": "images/character.png"
     },
-    "css": ["options.css"],
+
     "default_title": "Set up your TOADs!"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "toads@yankooliveira.com"
+    }
   }
 }
