@@ -278,6 +278,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
              let apiKey = null;
              let requiresPageText = false;
 
+             const template = selectedCharacter?.customPromptTemplate;
+             const characterTemplateHasPageTextPlaceholder = template !== null && typeof template === 'string' && (template.includes('{PAGE_TEXT}') || template.includes('{PAGE_TEXT_SECTION}'));
+
+
              if (currentSettings.backendType === 'gemini') {
                  backendUsed = 'gemini';
                  // Check rate limits only when actually using Gemini
@@ -291,23 +295,24 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
                  model = currentSettings.geminiModel;
                  apiKey = currentSettings.geminiApiKey;
 
-
-                 // Page text is required for Gemini if any part of the effective template uses the placeholder
-                 const effectiveTemplate = selectedCharacter.customPromptTemplate || (currentSettings.ollamaSendPageContent ? DEFAULTS.DEFAULT_PROMPT_WITH_CONTENT : DEFAULTS.DEFAULT_PROMPT_URL_ONLY); // simplified for check, real prompt build uses promptBuilder
-                 if (effectiveTemplate.includes('{PAGE_TEXT}') || effectiveTemplate.includes('{PAGE_TEXT_SECTION}')) {
+                 // Page text is required for Gemini if the template includes the placeholder
+                 // Either the character's template has it, OR there's no character template and the base template has it.
+                 if (characterTemplateHasPageTextPlaceholder) {
                       requiresPageText = true;
-                      console.log("Prompt template includes {PAGE_TEXT}, requesting content.");
+                      console.log("Gemini backend and prompt template includes {PAGE_TEXT}, requesting content.");
                  }
-
 
              } else { // Ollama
                  backendUsed = 'ollama';
                  getQuipFunction = getOllamaQuip;
                  model = currentSettings.ollamaModel;
 
+                 // Check if page text is required based on Ollama setting and template placeholders
                  if (currentSettings.ollamaSendPageContent) {
                       requiresPageText = true;
-                     console.log("Ollama setting to send page content is enabled.");
+                      console.log("Ollama backend, setting to send page content is enabled, and template supports it.");
+                 } else {
+                     console.log("Ollama backend, page text not required (setting disabled or template doesn't support it).");
                  }
              }
 
@@ -349,158 +354,158 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
              let historyString = "";
              if (currentSettings.maxHistorySize > 0) {
                  const relevantHistoryItems = currentHistory
-                     .filter(item => cleanUrl(item.url) === currentCleanUrl)
-                     .map(item => item.quip);
+                 .filter(item => cleanUrl(item.url) === currentCleanUrl)
+                 .map(item => item.quip);
 
-                 if (relevantHistoryItems.length > 0) {
-                     historyString = relevantHistoryItems.map(q => `- ${q}`).join("\n");
-                     console.log(`History for prompt (${currentCleanUrl}):\n${historyString}`);
-                 } else {
-                      console.log(`No relevant history found for ${currentCleanUrl}`);
-                 }
+             if (relevantHistoryItems.length > 0) {
+                 historyString = relevantHistoryItems.map(q => `- ${q}`).join("\n");
+                 console.log(`History for prompt (${currentCleanUrl}):\n${historyString}`);
              } else {
-                 console.log("History feature disabled.");
+                  console.log(`No relevant history found for ${currentCleanUrl}`);
              }
-
-             const finalPrompt = createFinalPrompt(
-                 selectedCharacter,
-                 currentFullUrl,
-                 historyString,
-                 pageTextContent
-             );
-
-             let quip;
-             if (backendUsed === 'gemini') {
-                 quip = await getQuipFunction(currentFullUrl, model, apiKey, finalPrompt);
-             } else { 
-                 quip = await getQuipFunction(currentFullUrl, model, currentSettings.ollamaUrl, finalPrompt);
-             }
-
-             const isErrorQuip = !quip || /error|limit|fail|invalid|reach|blocked|speechless|confused|malfunctioning|missing api key|couldn't generate a quip|blocked the prompt|unexpected response/i.test(quip.toLowerCase());
-             if (quip && !isErrorQuip && currentSettings.maxHistorySize > 0) {
-                 // Add to history only if it's not an error message AND history is enabled
-                 const newItem = { timestamp: Date.now(), url: currentFullUrl, quip: quip };
-                 currentHistory = updateHistory(currentHistory, newItem, currentSettings.maxHistorySize);
-
-                 chrome.storage.local.set({ requestHistory: currentHistory }).then(() => {
-                      console.log(`History updated. New size: ${currentHistory.length}`);
-                 }).catch(err => {
-                     console.error("Error saving updated history:", err);
-                 });
-             } else if (isErrorQuip) {
-                 console.log("%cSkipping history update due to error/non-quip response:", 'color: orange', quip);
-             }
-
-             if (quip) {
-                 try {
-                     await chrome.tabs.sendMessage(tabId, {
-                         type: "SHOW_QUIP",
-                         quip: quip,
-                         imagePath: characterImagePath
-                     });
-                     console.log(`%c${backendUsed}: Sent message (and image path) to tab ${tabId}`, 'color: green');
-                 } catch (sendError) {
-                      if (sendError.message.includes("Could not establish connection") || sendError.message.includes("Receiving end does not exist")) {
-                         console.warn(`Could not send message to tab ${tabId} (content script possibly unloaded or not injected): ${sendError.message}`);
-                      } else {
-                         console.error(`Error sending message to tab ${tabId}:`, sendError);
-                      }
-                 }
-             } else {
-                 console.log(`${backendUsed}: No quip or error message generated for ${currentFullUrl}`);
-             }
-
-         } catch (error) {
-            console.error("Background: Uncaught error during main processing loop.", error);
-            // Note: If an error occurs here *after* setting lastProcessedUrls,
-            // it might prevent a retry on subsequent 'complete' events for the same URL.
-            // This is generally acceptable behavior to avoid endless failed loops.
-         }
-    } else {
-         // Log why it was skipped (optional, but good for debugging)
-         if (changeInfo.status === 'complete' && currentCleanUrl === lastUrl) {
-             console.log(`Tab ${tabId}: 'complete' status for same URL ${currentCleanUrl}. Skipping.`);
-         } else if (!currentCleanUrl) {
-              console.log(`Tab ${tabId}: Invalid URL ${currentFullUrl}. Skipping.`);
          } else {
-              console.log(`Tab ${tabId}: Status is '${changeInfo.status}' for ${currentFullUrl}. Skipping.`);
+             console.log("History feature disabled.");
          }
-    }
+
+         const finalPrompt = createFinalPrompt(
+             selectedCharacter,
+             currentFullUrl,
+             historyString,
+             pageTextContent
+         );
+
+         let quip;
+         if (backendUsed === 'gemini') {
+             quip = await getQuipFunction(currentFullUrl, model, apiKey, finalPrompt);
+         } else { 
+             quip = await getQuipFunction(currentFullUrl, model, currentSettings.ollamaUrl, finalPrompt);
+         }
+
+         const isErrorQuip = !quip || /error|limit|fail|invalid|reach|blocked|speechless|confused|malfunctioning|missing api key|couldn't generate a quip|blocked the prompt|unexpected response/i.test(quip.toLowerCase());
+         if (quip && !isErrorQuip && currentSettings.maxHistorySize > 0) {
+             // Add to history only if it's not an error message AND history is enabled
+             const newItem = { timestamp: Date.now(), url: currentFullUrl, quip: quip };
+             currentHistory = updateHistory(currentHistory, newItem, currentSettings.maxHistorySize);
+
+             chrome.storage.local.set({ requestHistory: currentHistory }).then(() => {
+                  console.log(`History updated. New size: ${currentHistory.length}`);
+             }).catch(err => {
+                 console.error("Error saving updated history:", err);
+             });
+         } else if (isErrorQuip) {
+             console.log("%cSkipping history update due to error/non-quip response:", 'color: orange', quip);
+         }
+
+         if (quip) {
+             try {
+                 await chrome.tabs.sendMessage(tabId, {
+                     type: "SHOW_QUIP",
+                     quip: quip,
+                     imagePath: characterImagePath
+                 });
+                 console.log(`%c${backendUsed}: Sent message (and image path) to tab ${tabId}`, 'color: green');
+             } catch (sendError) {
+                  if (sendError.message.includes("Could not establish connection") || sendError.message.includes("Receiving end does not exist")) {
+                     console.warn(`Could not send message to tab ${tabId} (content script possibly unloaded or not injected): ${sendError.message}`);
+                  } else {
+                     console.error(`Error sending message to tab ${tabId}:`, sendError);
+                  }
+             }
+         } else {
+             console.log(`${backendUsed}: No quip or error message generated for ${currentFullUrl}`);
+         }
+
+     } catch (error) {
+        console.error("Background: Uncaught error during main processing loop.", error);
+        // Note: If an error occurs here *after* setting lastProcessedUrls,
+        // it might prevent a retry on subsequent 'complete' events for the same URL.
+        // This is generally acceptable behavior to avoid endless failed loops.
+     }
+} else {
+     // Log why it was skipped (optional, but good for debugging)
+     if (changeInfo.status === 'complete' && currentCleanUrl === lastUrl) {
+         console.log(`Tab ${tabId}: 'complete' status for same URL ${currentCleanUrl}. Skipping.`);
+     } else if (!currentCleanUrl) {
+          console.log(`Tab ${tabId}: Invalid URL ${currentFullUrl}. Skipping.`);
+     } else {
+          console.log(`Tab ${tabId}: Status is '${changeInfo.status}' for ${currentFullUrl}. Skipping.`);
+     }
+}
 });
 
 // Clean up the map when a tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
-    if (lastProcessedUrls.has(tabId)) {
-        lastProcessedUrls.delete(tabId);
-        console.log(`Tab ${tabId} closed, removed from tracking map.`);
-    }
+if (lastProcessedUrls.has(tabId)) {
+    lastProcessedUrls.delete(tabId);
+    console.log(`Tab ${tabId} closed, removed from tracking map.`);
+}
 });
 
 chrome.runtime.onInstalled.addListener(async (details) => {
-    console.log("TOADs: Extension installed or updated.", details);
+console.log("TOADs: Extension installed or updated.", details);
 
-    try {
-        const data = await chrome.storage.local.get({ availableCharacters: [] });
-        let availableCharacters = data.availableCharacters || [];
+try {
+    const data = await chrome.storage.local.get({ availableCharacters: [] });
+    let availableCharacters = data.availableCharacters || [];
 
-        console.log(`OnInstalled: Loaded ${availableCharacters.length} characters from storage.`);
+    console.log(`OnInstalled: Loaded ${availableCharacters.length} characters from storage.`);
 
-        const latestBuiltinsMap = new Map(BUILTIN_CHARACTERS.map(char => [char.id, char]));
+    const latestBuiltinsMap = new Map(BUILTIN_CHARACTERS.map(char => [char.id, char]));
 
-        const updatedAvailableCharacters = [];
-        const seenBuiltinIds = new Set();
+    const updatedAvailableCharacters = [];
+    const seenBuiltinIds = new Set();
 
-        for (const char of availableCharacters) {
-            if (char && char.id) {
-                if (char.source === 'custom') {
-                    updatedAvailableCharacters.push(char);
-                } else if (char.source === 'builtin') {
-                    if (latestBuiltinsMap.has(char.id)) {
-                        updatedAvailableCharacters.push(latestBuiltinsMap.get(char.id));
-                        seenBuiltinIds.add(char.id);
-                    } else {
-                        console.log(`OnInstalled: Removing old built-in character "${char.name}" (${char.id}) which is no longer in the package.`);
-                    }
+    for (const char of availableCharacters) {
+        if (char && char.id) {
+            if (char.source === 'custom') {
+                updatedAvailableCharacters.push(char);
+            } else if (char.source === 'builtin') {
+                if (latestBuiltinsMap.has(char.id)) {
+                    updatedAvailableCharacters.push(latestBuiltinsMap.get(char.id));
+                    seenBuiltinIds.add(char.id);
                 } else {
-                     console.warn("OnInstalled: Skipping invalid character found in storage (unknown source):", char);
+                    console.log(`OnInstalled: Removing old built-in character "${char.name}" (${char.id}) which is no longer in the package.`);
                 }
             } else {
-                 console.warn("OnInstalled: Skipping invalid character found in storage:", char);
+                 console.warn("OnInstalled: Skipping invalid character found in storage (unknown source):", char);
             }
+        } else {
+             console.warn("OnInstalled: Skipping invalid character found in storage:", char);
         }
-
-        for (const latestBuiltin of BUILTIN_CHARACTERS) {
-            if (!seenBuiltinIds.has(latestBuiltin.id)) {
-                updatedAvailableCharacters.push(latestBuiltin);
-                console.log(`OnInstalled: Adding new built-in character "${latestBuiltin.name}" (${latestBuiltin.id}).`);
-            }
-        }
-
-        await chrome.storage.local.set({ availableCharacters: updatedAvailableCharacters });
-        console.log(`OnInstalled: Saved updated available characters list (${updatedAvailableCharacters.length} items).`);
-
-        // Set default selected character only on first install if not already set
-        if (details.reason === "install") {
-             const settings = await chrome.storage.sync.get({ selectedCharacterId: null });
-            if (settings.selectedCharacterId === null) {
-                // Find the first available character, prioritize built-in if available
-                const firstCharacter = updatedAvailableCharacters.find(char => char.source === 'builtin') || updatedAvailableCharacters[0];
-                const defaultSelectedId = firstCharacter ? firstCharacter.id : null;
-
-                if (defaultSelectedId) {
-                     await chrome.storage.sync.set({ selectedCharacterId: defaultSelectedId });
-                     console.log(`OnInstalled: Setting default character ID "${defaultSelectedId}" on first install.`);
-                } else {
-                     console.warn("OnInstalled: No characters available to set a default selected character ID.");
-                }
-            } else {
-                 console.log(`OnInstalled: Existing selected character ID "${settings.selectedCharacterId}" found.`);
-            }
-        } else if (details.reason === "update") {
-             console.log("OnInstalled: Update complete. Available characters list in storage updated.");
-        }
-
-    } catch (error) {
-        console.error("OnInstalled: Error during update/install process:", error);
     }
+
+    for (const latestBuiltin of BUILTIN_CHARACTERS) {
+        if (!seenBuiltinIds.has(latestBuiltin.id)) {
+            updatedAvailableCharacters.push(latestBuiltin);
+            console.log(`OnInstalled: Adding new built-in character "${latestBuiltin.name}" (${latestBuiltin.id}).`);
+        }
+    }
+
+    await chrome.storage.local.set({ availableCharacters: updatedAvailableCharacters });
+    console.log(`OnInstalled: Saved updated available characters list (${updatedAvailableCharacters.length} items).`);
+
+    // Set default selected character only on first install if not already set
+    if (details.reason === "install") {
+         const settings = await chrome.storage.sync.get({ selectedCharacterId: null });
+        if (settings.selectedCharacterId === null) {
+            // Find the first available character, prioritize built-in if available
+            const firstCharacter = updatedAvailableCharacters.find(char => char.source === 'builtin') || updatedAvailableCharacters[0];
+            const defaultSelectedId = firstCharacter ? firstCharacter.id : null;
+
+            if (defaultSelectedId) {
+                 await chrome.storage.sync.set({ selectedCharacterId: defaultSelectedId });
+                 console.log(`OnInstalled: Setting default character ID "${defaultSelectedId}" on first install.`);
+            } else {
+                 console.warn("OnInstalled: No characters available to set a default selected character ID.");
+            }
+        } else {
+             console.log(`OnInstalled: Existing selected character ID "${settings.selectedCharacterId}" found.`);
+        }
+    } else if (details.reason === "update") {
+         console.log("OnInstalled: Update complete. Available characters list in storage updated.");
+    }
+
+} catch (error) {
+    console.error("OnInstalled: Error during update/install process:", error);
+}
 });
