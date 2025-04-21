@@ -1,5 +1,7 @@
 # TOtally unhelpful Assistant Daemons - TOADs
 
+![an animated gif showing different AI generated quips for the Ollama home page](/images/toads.gif "Some totally unhelpful assistant daemons")
+
 Remember that old paper clip that would pop up and give you helpful instructions on how to navigate the dread of crafting documents?
 Well, in the age of AI, it's clearly time for something like this to make a comeback.
 EVERYWHERE.
@@ -83,6 +85,14 @@ If you're the type who likes your AI nonsense *locally sourced* (and already hav
 *   Finally, locate the prominent **Save All Settings** button at the bottom and click it with purpose.
 
 Your Daemons are now armed with AI and ready to dispense their unique brand of unhelpfulness upon the unsuspecting web. Congratulations?
+
+## How to Care for Your Daemons (Or At Least Tolerate Them)
+
+Your Daemons aren't demanding, but they can get repetitive, especially with smaller AI models. If they keep spitting out the same old nonsense for a page, it's often because they remember what they said last time (thanks, Ollama!).
+
+The fastest fix is **brief amnesia**: Go to **Options > Data Management** and click **Clear History**. This wipes their memory of past quips.
+
+For persistent repetition, particularly with smaller models, you *could* try reducing the **Maximum History Length** in the same tab – less old nonsense for them to accidentally echo. Find the size that makes your Daemon reliably, but variably, unhelpful.
 
 ## Summoning *Your Own* Daemons: Creating Custom Characters (Chrome Only Feature!)
 
