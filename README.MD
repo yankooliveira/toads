@@ -22,7 +22,7 @@ Mostly, they just... exist... and occasionally bother you.
 *   **Spout Nonsense:** Generate short, semi-related but utterly unhelpful quips about the page you're looking at, powered by the magic (or lack thereof) of modern AI.
 *   **Come in Different Flavors:** Choose from a selection of built-in 'Daemons', each with their own distinct (and equally unhelpful) personality.
 *   **Let You Build Your Own:** Feeling brave? You can craft your own custom Daemons with unique looks and unhelpful personas.
-*   **Configurable:** You can set how *often* they appear, block them from certain websites, set rate limits, and manage the history of their terrible advice.
+*   **Be Configurable:** You can set how *often* they appear, block them from certain websites, set rate limits, and manage the history of their terrible advice.
 
 ## Installation (Chrome & Chromium)
 
